@@ -1,9 +1,14 @@
 #include <iostream>
 #include "Model.h"
+#include "Engine.h"
 
 int main(void)
 {
-	Model obj("D:\\Code\\C\\HoloGen\\res\\shadow_rabbit_200mm.obj");
-	printf("%d\n", obj.texList_d.diffuse_CUDA_HW[0].x);
+	Engine scene(1920, 1080);
+	scene.addFrame4f();
+	float4 color = { 1. ,0., 0., 1. };
+	scene.fill4f(0, color);
+	scene.saveFrame4f(0, "test.png");
+	system("mspaint.exe test.png");
 	return 0;
 }

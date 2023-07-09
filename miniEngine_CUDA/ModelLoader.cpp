@@ -231,7 +231,7 @@ TexID Model::loadTexture(vector<Texture>& textures)
 			{
 				Tex4f _normalMap;
 				//cout << "Normal ID:" << textures[k].id << endl;
-				_normalMap.data = (Pixel4f*)malloc(sizeof(Pixel4f) * H_img * W_img);
+				_normalMap.data = (float4*)malloc(sizeof(float4) * H_img * W_img);
 				_normalMap.H = H_img;
 				_normalMap.W = W_img;
 
@@ -321,7 +321,7 @@ TexID Model::loadTexture(vector<Texture>& textures)
 			Tex4f tmp;
 			tmp.H = H_img;
 			tmp.W = W_img;
-			tmp.data = (Pixel4f*)malloc(sizeof(Pixel4f) * H_img * W_img);
+			tmp.data = (float4*)malloc(sizeof(float4) * H_img * W_img);
 			int idx, idx_img;
 
 			for (int i = 0; i < H_img; i++)
@@ -331,7 +331,7 @@ TexID Model::loadTexture(vector<Texture>& textures)
 					idx = i * W_img + j;
 
 					idx_img = idx * 4;
-					Pixel4f t = { (float)Imgdata[idx_img], (float)Imgdata[idx_img + 1], (float)Imgdata[idx_img + 2],  (float)Imgdata[idx_img + 3] / 255. };
+					float4 t = { (float)Imgdata[idx_img], (float)Imgdata[idx_img + 1], (float)Imgdata[idx_img + 2],  (float)Imgdata[idx_img + 3] / 255. };
 					tmp.data[idx] = t;
 				}
 			}

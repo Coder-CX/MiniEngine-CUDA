@@ -5,6 +5,13 @@
 #include <vector>
 
 #define PI 3.14159
+#define MAX_CONTEXT_SIZE 4
+#define MAX_CONTEXT_BUFFER 1024
+#define MAX_FRAMEBUFFER_NUM 16
+
+#define BDIM_X 32
+#define BDIM_Y 32
+
 
 using std::vector;
 using std::string;

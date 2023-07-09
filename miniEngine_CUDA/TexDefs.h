@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PixelDef.h"
 #include <cuda_runtime.h>
 
 
@@ -19,19 +18,19 @@ typedef struct _Tex1f {
 typedef struct _Tex2f {
 	int H;
 	int W;
-	Pixel2f* data;
+	float2* data;
 } Tex2f;
 
 typedef struct _Tex3f {
 	int H;
 	int W;
-	Pixel3f* data;
+	float3* data;
 } Tex3f;
 
 typedef struct _Tex4f {
 	int H;
 	int W;
-	Pixel4f* data;
+	float4* data;
 } Tex4f;
 
 typedef struct _TextureDataList {

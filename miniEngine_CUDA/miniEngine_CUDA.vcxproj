@@ -125,7 +125,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -137,7 +137,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EngineBody.cpp" />
     <ClCompile Include="EngineMain.cpp" />
+    <CudaCompile Include="Engine_CUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
@@ -147,10 +151,11 @@
     <ClInclude Include="CUDA_assert.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EngineMath.h" />
+    <CudaCompile Include="Engine_CUDA.cuh" />
     <ClInclude Include="math.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="PixelDef.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="stb_image_write.h" />
     <ClInclude Include="TexDefs.h" />
   </ItemGroup>
   <ItemGroup>
