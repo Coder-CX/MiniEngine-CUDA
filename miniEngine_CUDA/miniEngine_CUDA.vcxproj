@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="Basic.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CUDA_assert.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EngineMath.h" />
     <ClInclude Include="math.h" />

@@ -61,5 +61,8 @@
     <ClInclude Include="TexDefs.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CUDA_assert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

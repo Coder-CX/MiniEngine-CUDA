@@ -1,4 +1,5 @@
 #pragma once
+#include "CUDA_assert.h"
 #include "Basic.h"
 #include "stb_image.h"
 #include "TexDefs.h"
@@ -6,6 +7,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
 
 typedef struct _TexIDCount {
 	unsigned int idDiffuseMap = 0;
@@ -118,31 +120,13 @@ public:
 		memset(flagLoadedDiffuse, 0, 64 * sizeof(bool));
 		memset(flagLoadedNormal, 0, 64 * sizeof(bool));
 		memset(flagLoadedOpacity, 0, 64 * sizeof(bool));
-		cudaInit();
 		Import(path);
+		cudaInit();
 		//cout << texList.DiffuseMap[0].H << " " << texList.DiffuseMap[0].W << endl;
 		//showIntensity(texList.DiffuseMap[1].data, texList.DiffuseMap[1].H, texList.DiffuseMap[1].W, false);
 	}
 
 private:
-
-	void cudaInit()
-	{
-		memset(&texDesc, 0, sizeof(struct cudaTextureDesc));
-		memset(&texDesc_tex, 0, sizeof(struct cudaTextureDesc));
-		//memset(&resDesc_depth, 0, sizeof(resDesc_depth));
-		this->texDesc.addressMode[0] = cudaAddressModeBorder;
-		this->texDesc.addressMode[1] = cudaAddressModeBorder;
-		this->texDesc.filterMode = cudaFilterModeLinear;
-		this->texDesc.readMode = cudaReadModeElementType;
-		this->texDesc.normalizedCoords = 0;
-
-		this->texDesc_tex.addressMode[0] = cudaAddressModeBorder;
-		this->texDesc_tex.addressMode[1] = cudaAddressModeBorder;
-		this->texDesc_tex.filterMode = cudaFilterModeLinear;
-		this->texDesc_tex.readMode = cudaReadModeElementType;
-		this->texDesc_tex.normalizedCoords = 0;
-	}
 
 	// Texture Describe
 	struct cudaTextureDesc  texDesc;
@@ -173,5 +157,59 @@ private:
 
 	TexID loadTexture(vector<Texture>& textures);
 
+
+	void cudaInit()
+	{
+		memset(&texDesc, 0, sizeof(struct cudaTextureDesc));
+		memset(&texDesc_tex, 0, sizeof(struct cudaTextureDesc));
+		//memset(&resDesc_depth, 0, sizeof(resDesc_depth));
+		this->texDesc.addressMode[0] = cudaAddressModeBorder;
+		this->texDesc.addressMode[1] = cudaAddressModeBorder;
+		this->texDesc.filterMode = cudaFilterModeLinear;
+		this->texDesc.readMode = cudaReadModeElementType;
+		this->texDesc.normalizedCoords = 0;
+
+		this->texDesc_tex.addressMode[0] = cudaAddressModeBorder;
+		this->texDesc_tex.addressMode[1] = cudaAddressModeBorder;
+		this->texDesc_tex.filterMode = cudaFilterModeLinear;
+		this->texDesc_tex.readMode = cudaReadModeElementType;
+		this->texDesc_tex.normalizedCoords = 0;
+
+		// DiffuseMap Init
+		const int numDiffuse = this->texList.DiffuseMap.size();
+		const int numNormal = this->texList.NormalMap.size();
+		//printf("%s, %d: %d\n", __FILE__, __LINE__, numDiffuse);
+		CHECK(cudaMallocHost(&this->texList_d.diffuse_CUDA_HW, sizeof(int2) * numDiffuse));
+		CHECK(cudaMallocHost(&this->texList_d.diffuse_CUDA_Tex, sizeof(cudaTextureObject_t) * numDiffuse));
+		CHECK(cudaMallocHost(&this->resDesc_diffuse, sizeof(cudaResourceDesc) * numDiffuse));
+		CHECK(cudaMallocHost(&this->diffuse_CUDA, sizeof(cudaArray_t) * numDiffuse));
+		vector<Tex4f>& diffuseMap = this->texList.DiffuseMap;
+		for (int i = 0; i < numDiffuse; i++)
+		{
+			CHECK(cudaMallocArray(this->diffuse_CUDA + i, &this->channelDesc_4f, diffuseMap[i].W, diffuseMap[i].H));
+			CHECK(cudaMemcpy2DToArray(this->diffuse_CUDA[i], 0, 0, diffuseMap[i].data, sizeof(float4) * diffuseMap[i].W, sizeof(float4) * diffuseMap[i].W, diffuseMap[i].H, cudaMemcpyHostToDevice));
+
+			this->resDesc_diffuse[i].resType = cudaResourceTypeArray;
+			this->resDesc_diffuse[i].res.array.array = this->diffuse_CUDA[i];
+			CHECK(cudaCreateTextureObject(this->texList_d.diffuse_CUDA_Tex + i, this->resDesc_diffuse + i, &this->texDesc_tex, NULL));
+			this->texList_d.diffuse_CUDA_HW[i] = { diffuseMap[i].H, diffuseMap[i].W };
+		}
+
+		// NormalMap Init
+		CHECK(cudaMallocHost(&this->texList_d.normal_CUDA_HW, sizeof(int2) * numNormal));
+		CHECK(cudaMallocHost(&this->texList_d.normal_CUDA_Tex, sizeof(cudaTextureObject_t) * numNormal));
+		CHECK(cudaMallocHost(&this->resDesc_normal, sizeof(struct cudaResourceDesc) * numNormal));
+		CHECK(cudaMallocHost(&this->normal_CUDA, sizeof(cudaArray_t) * numNormal));
+		vector<Tex4f>& normalMap = this->texList.NormalMap;
+		for (int i = 0; i < numNormal; i++)
+		{
+			CHECK(cudaMallocArray(this->normal_CUDA + i, &this->channelDesc_4f, normalMap[i].W, normalMap[i].H));
+			CHECK(cudaMemcpy2DToArray(this->normal_CUDA[i], 0, 0, normalMap[i].data, sizeof(float4) * normalMap[i].W, sizeof(float4) * normalMap[i].W, normalMap[i].H, cudaMemcpyHostToDevice));
+			this->resDesc_normal[i].resType = cudaResourceTypeArray;
+			this->resDesc_normal[i].res.array.array = normal_CUDA[i];
+			CHECK(cudaCreateTextureObject(this->texList_d.normal_CUDA_Tex + i, this->resDesc_normal + i, &this->texDesc_tex, NULL));
+			this->texList_d.normal_CUDA_HW[i] = { normalMap[i].H, normalMap[i].W };
+		}
+	}
 };
 
