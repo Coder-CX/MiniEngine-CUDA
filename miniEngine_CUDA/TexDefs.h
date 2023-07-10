@@ -1,37 +1,26 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#include "Basic.h"
+#include <string>
 
+template <typename T>
+struct Tex {
+	int H;
+	int W;
+	T* data;
+};
 
 typedef struct Texture {
 	textureType type;
-	string path;
+	std::string path;
 	unsigned int id;
 } Texture;
 
-typedef struct _Tex1f {
-	int H;
-	int W;
-	float* data;
-} Tex1f;
-
-typedef struct _Tex2f {
-	int H;
-	int W;
-	float2* data;
-} Tex2f;
-
-typedef struct _Tex3f {
-	int H;
-	int W;
-	float3* data;
-} Tex3f;
-
-typedef struct _Tex4f {
-	int H;
-	int W;
-	float4* data;
-} Tex4f;
+using Tex1f = Tex<float>;
+using Tex2f = Tex<float2>;
+using Tex3f = Tex<float3>;
+using Tex4f = Tex<float4>;
 
 typedef struct _TextureDataList {
 	vector<Tex4f> DiffuseMap;
@@ -73,5 +62,5 @@ typedef struct _TexList_CUDA {
 typedef struct _TexInput {
 	bool useDiffuse, useNormal, useOpacity;
 	unsigned int ID_normal, ID_opacity, *ID_diffuse;
-	int numDiffuse;
+	unsigned int numDiffuse;
 } TexInput;

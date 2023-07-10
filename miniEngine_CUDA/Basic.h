@@ -3,10 +3,11 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <vector>
+#include <vector_types.h>
 
 #define PI 3.14159
 #define MAX_CONTEXT_SIZE 4
-#define MAX_CONTEXT_BUFFER 1024
+#define MAX_TRIANGLE_BUFFER 1024
 #define MAX_FRAMEBUFFER_NUM 16
 
 #define BDIM_X 32
@@ -33,3 +34,34 @@ using mat4i = Eigen::Matrix4i;
 enum lightType { POINT_LIGHT, SUN_LIGHT, CONE_LIGHT };
 enum interpolationType { NEAREST, BILINEAR };
 enum textureType { DIFFUSE_MAP, NORMAL_MAP, SPECULAR_MAP, HEIGHT_MAP, DEPTH_MAP, SHADOW_MAP, OPACITY_MAP };
+
+typedef struct Context
+{
+	float* vec1f;
+	float2* vec2f;
+	float3* vec3f;
+	float4* vec4f;
+} Context;
+
+typedef struct ContextInside
+{
+	float vec1f[4];
+	float2 vec2f[4];
+	float3 vec3f[4];
+	float4 vec4f[4];
+} ContextInside;
+
+typedef struct VertexShader
+{
+	Context context;
+	float rhw;
+	vec4 pos;
+	vec2 pos_sf;
+	vec2i pos_si;
+} Vertex_S;
+
+typedef struct Box
+{
+	int min_X, max_X;
+	int min_Y, max_Y;
+} Box;

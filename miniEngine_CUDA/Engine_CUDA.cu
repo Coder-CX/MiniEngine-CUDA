@@ -18,6 +18,12 @@ uchar4 float4_uchar4(float4 a)
 	return {(unsigned char)(a.x * 255), (unsigned char)(a.y * 255), (unsigned char)(a.z * 255), (unsigned char)(a.w * 255) };
 }
 
+__device__
+uchar4 float_uchar4(float a)
+{
+	return { (unsigned char)(a * 255), (unsigned char)(a * 255), (unsigned char)(a * 255), 255 };
+}
+
 __global__
 void convertKernel(uchar4* dst, float4* src, int H, int W)
 {
@@ -27,6 +33,18 @@ void convertKernel(uchar4* dst, float4* src, int H, int W)
 	{
 		int idx = iy * W + ix;
 		dst[idx] = float4_uchar4(src[idx]);
+	}
+}
+
+__global__
+void convertKernel1f(uchar4* dst, float* src, int H, int W)
+{
+	int ix = threadIdx.x + blockDim.x * blockIdx.x;
+	int iy = threadIdx.y + blockDim.y * blockIdx.y;
+	if (ix < W && iy < H)
+	{
+		int idx = iy * W + ix;
+		dst[idx] = float_uchar4(src[idx]);
 	}
 }
 
@@ -49,4 +67,11 @@ void convertTex4f2Tex4i(uchar4* dst, float4* src, int H, int W)
 	dim3 blockSize(BDIM_X, BDIM_Y);
 	dim3 gridSize((W + BDIM_X - 1) / BDIM_X, (H + BDIM_Y - 1) / BDIM_Y);
 	convertKernel << <gridSize, blockSize >> > (dst, src, H, W);
+}
+
+void convertTex1f2Tex4i(uchar4* dst, float* src, int H, int W)
+{
+	dim3 blockSize(BDIM_X, BDIM_Y);
+	dim3 gridSize((W + BDIM_X - 1) / BDIM_X, (H + BDIM_Y - 1) / BDIM_Y);
+	convertKernel1f << <gridSize, blockSize >> > (dst, src, H, W);
 }

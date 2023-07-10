@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EngineMain.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ModelLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stb_image.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineBody.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,33 +35,42 @@
     <CudaCompile Include="Engine_CUDA.cu">
       <Filter>源文件</Filter>
     </CudaCompile>
+    <CudaCompile Include="EngineMain.cu">
+      <Filter>源文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CUDA_assert.h">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Engine.cuh">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Basic.h">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Camera.h">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Model.h">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Operators.cuh">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="TexDefs.h">
+      <Filter>头文件</Filter>
+    </CudaCompile>
+    <CudaCompile Include="EngineBody.cpp">
+      <Filter>源文件</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Basic.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="EngineMath.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="math.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TexDefs.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CUDA_assert.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stb_image_write.h">

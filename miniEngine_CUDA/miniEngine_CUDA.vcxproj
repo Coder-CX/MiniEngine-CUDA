@@ -127,6 +127,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,11 +136,18 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_89,sm_89</CodeGeneration>
+      <AdditionalOptions>--extended-lambda %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="EngineBody.cpp" />
-    <ClCompile Include="EngineMain.cpp" />
+    <CudaCompile Include="EngineBody.cpp" />
+    <CudaCompile Include="EngineMain.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <CudaCompile Include="Engine_CUDA.cu">
       <FileType>Document</FileType>
     </CudaCompile>
@@ -146,17 +155,18 @@
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Basic.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CUDA_assert.h" />
-    <ClInclude Include="Engine.h" />
+    <CudaCompile Include="Basic.h" />
+    <CudaCompile Include="Camera.h" />
+    <CudaCompile Include="CUDA_assert.h" />
+    <CudaCompile Include="Engine.cuh" />
     <ClInclude Include="EngineMath.h" />
     <CudaCompile Include="Engine_CUDA.cuh" />
     <ClInclude Include="math.h" />
-    <ClInclude Include="Model.h" />
+    <CudaCompile Include="Model.h" />
+    <CudaCompile Include="Operators.cuh" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
-    <ClInclude Include="TexDefs.h" />
+    <CudaCompile Include="TexDefs.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="EngineDraw.cu" />
