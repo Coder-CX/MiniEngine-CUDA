@@ -24,8 +24,8 @@ int main(void)
 	Engine scene(1080, 1920);
 	scene.useDepth(true);
 	const int outputID = 0;
-	scene.addFrame4f();
-	scene.fill4f(outputID, {0, 0, 0, 1});
+	scene.addFrame4f(outputID);
+	scene.fill4f(outputID, {0.3, 0.3, 0.3, 1});
 	Tex4f* canvas = scene.getFrame4f(outputID);
 	vec3 camPos(0, -0.5, 1.7);
 	vec3 camAt(0, 0, 0);
@@ -57,10 +57,19 @@ int main(void)
 		return saturatef(texColor * intense);
 	};
 	
-	for (int i = 0; i < obj.meshes.size(); i++)
+	clock_t tic, toc;
+	tic = clock();
+	for (int t = 0; t < 60; t++)
 	{
-		scene.drawFrame(canvas, obj.meshes[i].vertices_d, obj.meshes[i].indices_d, obj.meshes[i].triNum, vertexShader, fragmentShader);
+		for (int i = 0; i < obj.meshes.size(); i++)
+		{
+			scene.drawFrame(canvas, obj.meshes[i].vertices_d, obj.meshes[i].indices_d, obj.meshes[i].triNum, vertexShader, fragmentShader);
+		}
 	}
+	toc = clock();
+	printf("time = %f s\n", (toc - tic) / 1000.f);
+
+
 	string fileName = "test2.png";
 	string systemCall = "mspaint.exe " + fileName;
 	scene.saveFrame4f(outputID, fileName.c_str());

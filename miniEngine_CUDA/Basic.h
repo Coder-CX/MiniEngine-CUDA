@@ -4,10 +4,11 @@
 #include <Eigen/Geometry>
 #include <vector>
 #include <vector_types.h>
+#include <cuda_runtime.h>
 
 #define PI 3.14159
 #define MAX_CONTEXT_SIZE 4
-#define MAX_TRIANGLE_BUFFER 1024
+#define MAX_TRIANGLE_BUFFER 512
 #define MAX_FRAMEBUFFER_NUM 16
 
 #define BDIM_X 32
@@ -65,3 +66,10 @@ typedef struct Box
 	int min_X, max_X;
 	int min_Y, max_Y;
 } Box;
+
+typedef struct Tex_Shader
+{
+	int H, W;
+	cudaTextureObject_t tex;
+	cudaArray_t tex_data;
+} Tex_Shader;

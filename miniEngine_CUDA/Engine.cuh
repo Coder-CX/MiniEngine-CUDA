@@ -1,9 +1,15 @@
 #pragma once
+
+#define STB_IMAGE_WRITE_STATIC
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include "Engine_CUDA.cuh"
+#include "fragmentShader.cuh"
 #include "Basic.h"
 #include "Model.h"
 #include "TexDefs.h"
 #include "Operators.cuh"
+#include "stb_image_write.h"
 #include <cmath>
 
 
@@ -40,18 +46,28 @@ public:
 	void fill4f(int frameID, float3 RGB);
 	void fill4f(int frameID, float4 RGB);
 
-	void addFrame1f();
-	void addFrame1f(int height, int width);
-	void addFrame4f();
-	void addFrame4f(int height, int width);
+	void addFrame1f(int frameID, int height = -1, int width = -1)
+	{
+		addFrame<float>(frameID, this->frame1f, this->usedFrame1f, height, width);
+	}
+	void addFrame4f(int frameID, int height = -1, int width = -1)
+	{
+		addFrame<float4>(frameID, this->frame4f, this->usedFrame4f, height, width);
+	}
 
 	void useDepth(bool use)
 	{
 		this->depth = use;
 	}
-
-	void deleteFrame1f(int frameID);
-	void deleteFrame4f(int frameID);
+	
+	void deleteFrame1f(int frameID)
+	{
+		deleteFrame<float>(frameID, frame1f, usedFrame1f);
+	}
+	void deleteFrame4f(int frameID)
+	{
+		deleteFrame<float4>(frameID, frame4f, usedFrame4f);
+	}
 
 	template <class VS, class FS>
 	bool drawFrame(Tex4f* canvas, Vertex* vtxInput, unsigned int* indices, unsigned int triNum,
@@ -152,27 +168,146 @@ public:
 		return true;
 	}
 
-	void saveFrame4f(int frameID, const char* file);
-	void saveFrame1f(int frameID, const char* file);
+	void saveFrame1f(int frameID, const char* file)
+	{
+		saveFrame<float>(frameID, file, frame1f, usedFrame1f);
+	}
+	void saveFrame4f(int frameID, const char* file)
+	{
+		saveFrame<float4>(frameID, file, frame4f, usedFrame4f);
+	}
 	
 	Tex4f* getFrame4f(int frameID);
 	Tex1f* getFrame1f(int frameID);
+
+	Tex_Shader* getTexID(int texID)
+	{
+		if (usedTexID[texID])
+			return this->texList + texID;
+		else
+			printf("Tex [%d] is Used.\n", texID);
+	}
+
+	void bindTex1f(int texID, int frameID, cudaTextureDesc* texDesc)
+	{
+		bindTex<float>(texID, frameID, texDesc, this->frame1f, this->usedFrame1f, &this->channelDesc_1f);
+	}
+
+	void bindTex4f(int texID, int frameID, cudaTextureDesc* texDesc)
+	{
+		bindTex<float4>(texID, frameID, texDesc, this->frame4f, this->usedFrame4f, &this->channelDesc_4f);
+	}
+
+	void deleteTex(int texID);
 
 private:
 	void init(int Width, int Height);
 	void reset();
 
+	template<typename T>
+	void addFrame(int frameID, Tex<T>** frame, bool* usedFrame, int height = -1, int width = -1)
+	{
+		if (!usedFrame[frameID])
+		{
+			cudaMallocHost(frame + frameID, sizeof(Tex<T>));
+			frame[frameID]->H = height == -1 ? this->Height : height;
+			frame[frameID]->W = width == -1 ? this->Width : width;
+			cudaMalloc(&(frame[frameID]->data), sizeof(T) * frame[frameID]->H * frame[frameID]->W);
+			usedFrame[frameID] = true;
+			this->counter1f++;
+		}
+		else
+		{
+			printf("Frame [%d] is Used.\n", frameID);
+		}
+	}
+	
+	template<typename T>
+	void deleteFrame(int frameID, Tex<T>** frame, bool* usedFrame)
+	{
+		if (usedFrame[frameID])
+		{
+			cudaFree(frame[frameID]->data);
+			//free(frame + frameID);
+			usedFrame[frameID] = false;
+		}
+		else
+		{
+			printf("Frame [%d] is empty!\n", frameID);
+		}
+	}
+
+	template <typename T>
+	void saveFrame(int frameID, const char* file, Tex<T>** frame, bool* usedFrame)
+	{
+		if (usedFrame[frameID])
+		{
+			Tex<T>* _frame = frame[frameID];
+			size_t dataSize = sizeof(uchar4) * _frame->H * _frame->W;
+			uchar4* canvas_h = (uchar4*)malloc(dataSize);
+			cudaMalloc(&this->outputFrameBuffer, dataSize);
+
+			convertTexFloatToInt<T>(this->outputFrameBuffer, _frame->data, _frame->H, _frame->W);
+			cudaMemcpy(canvas_h, this->outputFrameBuffer, dataSize, cudaMemcpyDeviceToHost);
+			stbi_write_png(file, _frame->W, _frame->H, 4, canvas_h, 0);
+			cudaFree(this->outputFrameBuffer);
+		}
+		else
+		{
+			printf("Frame [%d] is empty!\n", frameID);
+		}
+	}
+
+	template <typename T>
+	void bindTex(int texID, int frameID, cudaTextureDesc* texDesc, Tex<T>** frame, bool* usedFrame, cudaChannelFormatDesc* channelDesc)
+	{
+		if (usedFrame[frameID] && !usedTexID[texID])
+		{
+			const int H = frame[frameID]->H;
+			const int W = frame[frameID]->W;
+			CHECK(cudaMallocArray(&this->texList[texID].tex_data, channelDesc, W, H));
+			cudaMemcpy2DToArray(this->texList[texID].tex_data, 0, 0, frame[frameID]->data, sizeof(T) * W, sizeof(T) * W, H, cudaMemcpyDeviceToDevice);
+
+			struct cudaResourceDesc resDesc;
+			resDesc.resType = cudaResourceTypeArray;
+			resDesc.res.array.array = this->texList[texID].tex_data;
+			cudaCreateTextureObject(&this->texList[texID].tex, &resDesc, texDesc, NULL);
+			this->usedTexID[texID] = true;
+		}
+		else if (!usedFrame[frameID])
+		{
+			printf("Frame [%d] is Empty!\n", frameID);
+		}
+		else
+		{
+			printf("tex [%d] is Used!\n", texID);
+		}
+	}
+
+private:
 	int Height, Width;
+
 	unsigned int counter1f = 0;
 	unsigned int counter4f = 0;
+
 	bool depth = true;
+	Tex1f depthFrame;
+	bool usedFrame1f[MAX_FRAMEBUFFER_NUM];
+	bool usedFrame4f[MAX_FRAMEBUFFER_NUM];
 	Tex1f* frame1f[MAX_FRAMEBUFFER_NUM];
 	Tex4f* frame4f[MAX_FRAMEBUFFER_NUM];
 	uchar4* outputFrameBuffer;
-	bool usedFrame1f[MAX_FRAMEBUFFER_NUM];
-	bool usedFrame4f[MAX_FRAMEBUFFER_NUM];
+
 	Vertex_S* vtx_S;
 	bool* isTopLeft_S;
 	Box* box;
-	Tex1f depthFrame;
+
+	bool usedTexID[2 * MAX_FRAMEBUFFER_NUM];
+	Tex_Shader texList[2 * MAX_FRAMEBUFFER_NUM];
+
+	cudaChannelFormatDesc channelDesc_1f = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
+	cudaChannelFormatDesc channelDesc_2f = cudaCreateChannelDesc(32, 32, 0, 0, cudaChannelFormatKindFloat);
+	cudaChannelFormatDesc channelDesc_3f = cudaCreateChannelDesc(32, 32, 32, 0, cudaChannelFormatKindFloat);
+	cudaChannelFormatDesc channelDesc_4f = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+
 };

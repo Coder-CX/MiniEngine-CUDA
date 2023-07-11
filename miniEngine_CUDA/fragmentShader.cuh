@@ -1,3 +1,18 @@
+#pragma once
+
+#include "Basic.h"
+#include "Operators.cuh"
+#include "TexDefs.h"
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
+template<class T>
+__host__ __device__
+inline int crossVec2(const T& v1, const T& v2)
+{
+	return v1(0) * v2(1) - v1(1) * v2(0);
+}
+
 template <class FS>
 __global__
 void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box* box_S, bool* isTopLeft, int triNum,
@@ -57,12 +72,10 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 
 			for (int i = 0; i < MAX_CONTEXT_SIZE; i++)
 			{
-
 				fragmentInput.vec1f[i] = input1.vec1f[i] * c0 + input2.vec1f[i] * c1 + input3.vec1f[i] * c2;
 				fragmentInput.vec2f[i] = input1.vec2f[i] * c0 + input2.vec2f[i] * c1 + input3.vec2f[i] * c2;
 				fragmentInput.vec3f[i] = input1.vec3f[i] * c0 + input2.vec3f[i] * c1 + input3.vec3f[i] * c2;
 				fragmentInput.vec4f[i] = input1.vec4f[i] * c0 + input2.vec4f[i] * c1 + input3.vec4f[i] * c2;
-
 			}
 
 			float4 color = fragmentShader(fragmentInput);

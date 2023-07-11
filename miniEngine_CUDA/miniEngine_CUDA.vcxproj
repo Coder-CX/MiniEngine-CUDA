@@ -144,13 +144,14 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="EngineBody.cpp" />
+    <CudaCompile Include="EngineBody.cu" />
     <CudaCompile Include="EngineMain.cu">
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="Engine_CUDA.cu">
       <FileType>Document</FileType>
     </CudaCompile>
+    <ClCompile Include="fragmentShader.cuh" />
     <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
@@ -167,10 +168,6 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
     <CudaCompile Include="TexDefs.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="EngineDraw.cu" />
-    <CudaCompile Include="EngineInit.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

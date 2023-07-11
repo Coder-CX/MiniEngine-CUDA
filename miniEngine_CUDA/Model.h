@@ -173,7 +173,6 @@ private:
 		this->texDesc_tex.addressMode[1] = cudaAddressModeBorder;
 		this->texDesc_tex.filterMode = cudaFilterModeLinear;
 		this->texDesc_tex.readMode = cudaReadModeElementType;
-		//this->texDesc_tex.readMode = cudaReadModeNormalizedFloat;
 		this->texDesc_tex.normalizedCoords = 0;
 
 		// DiffuseMap Init

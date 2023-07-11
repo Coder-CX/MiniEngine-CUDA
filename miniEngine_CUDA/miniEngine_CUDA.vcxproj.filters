@@ -21,14 +21,11 @@
     <ClCompile Include="stb_image.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="fragmentShader.cuh">
+      <Filter>头文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="EngineInit.cu">
-      <Filter>源文件</Filter>
-    </CudaCompile>
-    <CudaCompile Include="EngineDraw.cu">
-      <Filter>源文件</Filter>
-    </CudaCompile>
     <CudaCompile Include="Engine_CUDA.cuh">
       <Filter>头文件</Filter>
     </CudaCompile>
@@ -59,7 +56,7 @@
     <CudaCompile Include="TexDefs.h">
       <Filter>头文件</Filter>
     </CudaCompile>
-    <CudaCompile Include="EngineBody.cpp">
+    <CudaCompile Include="EngineBody.cu">
       <Filter>源文件</Filter>
     </CudaCompile>
   </ItemGroup>
