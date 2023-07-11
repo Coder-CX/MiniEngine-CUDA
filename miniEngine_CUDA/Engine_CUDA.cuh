@@ -19,7 +19,8 @@ inline int crossVec2(const T& v1, const T& v2)
 
 template <class FS>
 __global__
-void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box* box_S, bool* isTopLeft, int triNum)
+void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box* box_S, bool* isTopLeft, int triNum,
+	bool depth, Tex1f depthFrame)
 {
 	int ix = threadIdx.x + blockDim.x * blockIdx.x;
 	int iy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -28,9 +29,11 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 		int triStart = triCount * 3;
 		if (ix >= box_S[triCount].min_X && ix <= box_S[triCount].max_X && iy >= box_S[triCount].min_Y && iy <= box_S[triCount].max_Y)
 		{
-			vec2i& p0 = vtx_S[triStart].pos_si;
-			vec2i& p1 = vtx_S[triStart + 1].pos_si;
-			vec2i& p2 = vtx_S[triStart + 2].pos_si;
+			VertexShader vtx[3] = { vtx_S[triStart] , vtx_S[triStart + 1], vtx_S[triStart + 2] };
+
+			vec2i& p0 = vtx[0].pos_si;
+			vec2i& p1 = vtx[1].pos_si;
+			vec2i& p2 = vtx[2].pos_si;
 			vec2 pos_f((float)ix + .5f, (float)iy + .5f);
 			int E01 = -(ix - p0(0)) * (p1(1) - p0(1)) + (iy - p0(1)) * (p1(0) - p0(0)),
 				E12 = -(ix - p1(0)) * (p2(1) - p1(1)) + (iy - p1(1)) * (p2(0) - p1(0)),
@@ -40,9 +43,9 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			if (E12 < (isTopLeft[triStart + 1] ? 0 : 1)) continue;
 			if (E20 < (isTopLeft[triStart + 2] ? 0 : 1)) continue;
 
-			vec2 s0 = vtx_S[triStart].pos_sf - pos_f;
-			vec2 s1 = vtx_S[triStart + 1].pos_sf - pos_f;
-			vec2 s2 = vtx_S[triStart + 2].pos_sf - pos_f;
+			vec2 s0 = vtx[0].pos_sf - pos_f;
+			vec2 s1 = vtx[1].pos_sf - pos_f;
+			vec2 s2 = vtx[2].pos_sf - pos_f;
 
 			float a = abs(crossVec2(s1, s2));
 			float b = abs(crossVec2(s2, s0));
@@ -54,18 +57,24 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			b /= s;
 			c /= s;
 
-			float rhw = vtx_S[0].rhw * a + vtx_S[1].rhw * b + vtx_S[2].rhw * c;
+			float rhw = vtx[0].rhw * a + vtx[1].rhw * b + vtx[2].rhw * c;
+			//printf("%s %d\n", __FILE__, __LINE__);
+			//printf("(%d %d): %f %f\n", iy, ix, rhw, depthFrame.data[iy * canvas.W + ix]);
+			if (depth && rhw < depthFrame.data[iy * canvas->W + ix])
+				continue;
+			depthFrame.data[iy * canvas->W + ix] = rhw;
+			
 
 			float w = 1.0f / ((rhw != 0.0f) ? rhw : 1.0f);
 
-			float c0 = vtx_S[triStart].rhw * a * w;
-			float c1 = vtx_S[triStart + 1].rhw * b * w;
-			float c2 = vtx_S[triStart + 2].rhw * c * w;
+			float c0 = vtx[0].rhw * a * w;
+			float c1 = vtx[1].rhw * b * w;
+			float c2 = vtx[2].rhw * c * w;
 
 			ContextInside fragmentInput;
-			Context& input1 = vtx_S[triStart].context;
-			Context& input2 = vtx_S[triStart + 1].context;
-			Context& input3 = vtx_S[triStart + 2].context;
+			Context& input1 = vtx[0].context;
+			Context& input2 = vtx[1].context;
+			Context& input3 = vtx[2].context;
 			
 			for (int i = 0; i < MAX_CONTEXT_SIZE; i++)
 			{
@@ -78,6 +87,7 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			}
 
 			float4 color = fragmentShader(fragmentInput);
+			//printf("(%d, %d) = %f %f %f %f\n", iy, ix, color.x, color.y, color.z, color.w);
 			canvas->data[iy * canvas->W + ix] = color;	
 		}
 	}

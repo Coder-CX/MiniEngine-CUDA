@@ -28,7 +28,8 @@ class Mesh {
 public:
 	vector<Vertex> vertices;
 	vector<unsigned int> indices;
-	unsigned int faceNum;
+	unsigned int vtxNum;
+	unsigned int triNum;
 	
 	Vertex* vertices_d;
 	unsigned int* indices_d;
@@ -43,19 +44,18 @@ public:
 		this->indices = indices;
 		this->texID = texID;
 		this->opacity = Opacity;
+		this->vtxNum = vertices.size();
+		this->triNum = indices.size() / 3;
 		cudaInit();
 	}
 private:
 	void cudaInit()
 	{
-		cudaMalloc(&vertices_d, sizeof(Vertex) * faceNum);		
-		cudaMalloc(&indices_d, sizeof(unsigned int) * faceNum * 3);
+		cudaMallocHost(&vertices_d, sizeof(Vertex) * vtxNum);		
+		cudaMallocHost(&indices_d, sizeof(unsigned int) * this->indices.size());
 
-		cudaMemset(vertices_d, 0, sizeof(Vertex) * faceNum);
-		cudaMemset(indices_d, 0, sizeof(unsigned int) * faceNum * 3);
-
-		cudaMemcpy(vertices_d, vertices.data(), sizeof(Vertex) * faceNum, cudaMemcpyHostToDevice);
-		cudaMemcpy(indices_d, indices.data(), sizeof(unsigned int) * faceNum * 3, cudaMemcpyHostToDevice);
+		cudaMemcpy(vertices_d, vertices.data(), sizeof(Vertex) * vtxNum, cudaMemcpyHostToHost);
+		cudaMemcpy(indices_d, indices.data(), sizeof(unsigned int) * this->indices.size(), cudaMemcpyHostToHost);
 
 		if (texID.diffuseMap.size() > 0)
 		{

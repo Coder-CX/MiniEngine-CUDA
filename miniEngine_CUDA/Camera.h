@@ -10,7 +10,7 @@ public:
 	vec3 up;
 	float FOV;
 
-	Camera(vec3 pos, vec3 target, vec3 up, float FOV = 90.f)
+	Camera(vec3 pos, vec3 target, vec3 up, float FOV = PI / 2)
 	{
 		this->pos = pos;
 		this->target = target;

@@ -20,10 +20,15 @@ void Engine::init(int width, int height)
 	this->counter4f = 0;
 	this->Height = height;
 	this->Width = width;
+	this->depthFrame.H = height;
+	this->depthFrame.W = width;
 
 	cudaMallocHost(&this->vtx_S, sizeof(Vertex_S) * MAX_TRIANGLE_BUFFER * 3);
 	cudaMallocHost(&this->box, sizeof(Box) * MAX_TRIANGLE_BUFFER);
 	cudaMallocHost(&this->isTopLeft_S, sizeof(bool) * MAX_TRIANGLE_BUFFER * 3);
+	cudaMallocHost(&this->depthFrame.data, sizeof(float) * height * width);
+
+	memset(this->depthFrame.data, 0, sizeof(float) * height * width);
 
 	for (int i = 0; i < MAX_TRIANGLE_BUFFER * 3; i++)
 	{

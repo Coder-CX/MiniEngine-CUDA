@@ -45,15 +45,15 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, TexIDCount& texID)
 		Vertex vertex;
 		vec3 vector;
 		vector(0) = mesh->mVertices[i].x;
-		vector(1) = mesh->mVertices[i].z; // Switch Y-Z Axises
-		vector(2) = mesh->mVertices[i].y; // Switch Y-Z Axises
+		vector(1) = mesh->mVertices[i].y; // Switch Y-Z Axises
+		vector(2) = mesh->mVertices[i].z; // Switch Y-Z Axises
 		vertex.pos = vector;
 		//Normals
 		if (mesh->HasNormals())
 		{
 			vector(0) = mesh->mNormals[i].x;
-			vector(1) = mesh->mNormals[i].z; // Switch Y-Z Axises
-			vector(2) = mesh->mNormals[i].y; // Switch Y-Z Axises
+			vector(1) = mesh->mNormals[i].y; // Switch Y-Z Axises
+			vector(2) = mesh->mNormals[i].z; // Switch Y-Z Axises
 			vertex.norm = vector;
 		}
 		//Texture coordnates
@@ -65,13 +65,13 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, TexIDCount& texID)
 			vertex.texCoord = vec;
 
 			vector(0) = mesh->mTangents[i].x;
-			vector(1) = mesh->mTangents[i].z; // Switch Y-Z Axises
-			vector(2) = mesh->mTangents[i].y; // Switch Y-Z Axises
+			vector(1) = mesh->mTangents[i].y; // Switch Y-Z Axises
+			vector(2) = mesh->mTangents[i].z; // Switch Y-Z Axises
 			vertex.tangent = vector;
 
 			vector(0) = mesh->mBitangents[i].x;
-			vector(1) = mesh->mBitangents[i].z; // Switch Y-Z Axises
-			vector(2) = mesh->mBitangents[i].y; // Switch Y-Z Axises
+			vector(1) = mesh->mBitangents[i].y; // Switch Y-Z Axises
+			vector(2) = mesh->mBitangents[i].z; // Switch Y-Z Axises
 			vertex.biTangent = vector;
 		}
 		else
@@ -331,7 +331,7 @@ TexID Model::loadTexture(vector<Texture>& textures)
 					idx = i * W_img + j;
 
 					idx_img = idx * 4;
-					float4 t = { (float)Imgdata[idx_img], (float)Imgdata[idx_img + 1], (float)Imgdata[idx_img + 2],  (float)Imgdata[idx_img + 3] / 255. };
+					float4 t = { (float)Imgdata[idx_img] / 255., (float)Imgdata[idx_img + 1] / 255., (float)Imgdata[idx_img + 2] / 255.,  (float)Imgdata[idx_img + 3] / 255. };
 					tmp.data[idx] = t;
 				}
 			}
