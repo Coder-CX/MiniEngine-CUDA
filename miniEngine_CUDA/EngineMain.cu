@@ -1,15 +1,27 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include "Model.h"
-#include "Engine.cuh"
 #include "Camera.h"
 #include "EngineMath.h"
+#include "Engine.cuh"
 #include <cmath>
+
+__device__
+float4 saturatef(float4& color)
+{
+	return { __saturatef(color.x),__saturatef(color.y), __saturatef(color.z), __saturatef(color.w) };
+}
+__device__
+float4 saturatef(float4&& color)
+{
+	return { __saturatef(color.x),__saturatef(color.y), __saturatef(color.z), __saturatef(color.w) };
+}
+
 
 int main(void)
 {
 	Model obj("D:\\Code\\C\\miniEngine_CUDA\\res\\diablo3_pose.obj");
-	Engine scene(600, 800);
+	Engine scene(1080, 1920);
 	scene.useDepth(true);
 	const int outputID = 0;
 	scene.addFrame4f();
@@ -24,14 +36,12 @@ int main(void)
 	mat4 m_lookAt = lookAt(cam);
 	mat4 m_proj = perspective(cam.FOV, (float)canvas->W / canvas->H, 1, 500);
 	mat4 m_trans = m_proj * m_lookAt;
-
-	//mat4 m_model_norm = m_trans.inverse().transpose();
-
+	cudaTextureObject_t tex = obj.texList_d.diffuse_CUDA_Tex[0];
+	
 	const int COLOR = 0;
 
 	auto vertexShader = [=]__host__(Vertex& vtxInput, Context& context)->vec4 {
 		vec4 pos = m_trans * vecXYZ1(vtxInput.pos);
-		//printf("%f %f %f %f\n", pos.x(), pos.y(), pos.z(), pos.w());
 		context.vec2f[0] = vec2ToFloat2(vtxInput.texCoord);
 		context.vec3f[0] = vec3ToFloat3(vtxInput.norm);
 		return pos;
@@ -39,17 +49,19 @@ int main(void)
 
 	auto fragmentShader = [=]__device__(ContextInside& context)->float4 {
 		float2 uv = context.vec2f[0];
+		float tex_x = uv.x * obj.texList_d.diffuse_CUDA_HW[0].y;
+		float tex_y = uv.y * obj.texList_d.diffuse_CUDA_HW[0].x;
 		vec3 norm = float3ToVec3(context.vec3f[0]);
-		float intense =__saturatef(norm.dot(l_dir));
-		//printf("%f\n", intense);
-		return { intense, intense, intense, intense };
+		float intense = norm.dot(l_dir);
+		float4 texColor = tex2D<float4>(tex, tex_x + 0.5f, tex_y + 0.5f);
+		return saturatef(texColor * intense);
 	};
 	
 	for (int i = 0; i < obj.meshes.size(); i++)
 	{
 		scene.drawFrame(canvas, obj.meshes[i].vertices_d, obj.meshes[i].indices_d, obj.meshes[i].triNum, vertexShader, fragmentShader);
 	}
-	string fileName = "test6.png";
+	string fileName = "test2.png";
 	string systemCall = "mspaint.exe " + fileName;
 	scene.saveFrame4f(outputID, fileName.c_str());
 	system(systemCall.c_str());

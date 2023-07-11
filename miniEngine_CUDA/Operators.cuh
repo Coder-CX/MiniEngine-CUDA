@@ -123,7 +123,7 @@ inline float3& operator/=(float3& a, const float& b)
 __host__ __device__
 inline float4 operator*(const float4& a, const float& b)
 {
-	return { a.x * b, a.y * b, a.z * b, a.w * b };
+	return { a.x * b, a.y * b, a.z * b, a.w };
 }
 
 __host__ __device__

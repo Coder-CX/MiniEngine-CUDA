@@ -65,14 +65,11 @@ public:
 		for (unsigned int triCount = 0; triCount < triNum; triCount++)
 		{
 			bool vtxFault = false;
-			//printf("drawCount = %d, indiceNum = %d\n", drawCount, triNum * 3);
 			unsigned int vtxBufferStartIdx = drawCount * 3;
-			//printf("%s: %d\n", __FILE__, __LINE__);
 			for (unsigned int vtxIdx = 0; vtxIdx < 3; vtxIdx++)
 			{
 				unsigned int vtxBufferCount = vtxBufferStartIdx + vtxIdx;
 				Vertex_S* vertex = this->vtx_S + vtxBufferCount;
-				//printf("%d\n", vtxBufferCount);
 				for (int i = 0; i < MAX_CONTEXT_SIZE; i++)
 				{
 					vertex->context.vec1f[i] = 0;
@@ -80,10 +77,7 @@ public:
 					vertex->context.vec3f[i] = { 0, 0, 0 };
 					vertex->context.vec4f[i] = { 0, 0, 0, 0 };
 				}
-				//printf("%d: ", vtxIdx);
-				//printf("%f %f %f %f\n", vertex->pos(0), vertex->pos(1), vertex->pos(2), vertex->pos(3));
 				vertex->pos = vertexShader(vtxInput[indices[triCount * 3 + vtxIdx]], vertex->context);
-				//printf("vtx %d: %f %f %f %f\n", vtxIdx, vertex->pos(0), vertex->pos(1), vertex->pos(2), vertex->pos(3));
 				float w = vertex->pos(3);
 				if (w == 0.f) { vtxFault = true; break; }
 				if (vertex->pos.z() < 0.f || vertex->pos.z() > w) { vtxFault = true; break; }
@@ -91,12 +85,10 @@ public:
 				if (vertex->pos.y() < -w || vertex->pos.y() > w) { vtxFault = true; break; }
 				vertex->rhw = 1.f / w;
 				vertex->pos *= vertex->rhw;
-				//printf("%s: %d\n", __FILE__, __LINE__);
-
+				
 				vertex->pos_sf = vec2((vertex->pos(0) + 1.f) * canvas->W * 0.5f, (1.f - vertex->pos(1)) * canvas->H * 0.5f);
 				vertex->pos_si = vec2i((int)(vertex->pos_sf(0) + .5f), (int)(vertex->pos_sf(1) + .5f));
-				//printf("%d: %f %f\n", vtxIdx, vertex->pos_sf(0), vertex->pos_sf(1));
-
+				
 				Box& box = this->box[drawCount];
 				if (vtxIdx == 0)
 				{
@@ -113,14 +105,12 @@ public:
 			}
 			if (vtxFault)
 				continue;
-			//printf("%s: %d, vtxBuffer[%d].pos = %f %f %f\n", __FILE__, __LINE__, drawCount, vtx_S[drawCount * 3].pos(0), vtx_S[drawCount * 3].pos(1), vtx_S[drawCount * 3].pos(2));
 			vec4 v01 = vtx_S[vtxBufferStartIdx + 1].pos - vtx_S[vtxBufferStartIdx].pos;
 			vec4 v02 = vtx_S[vtxBufferStartIdx + 2].pos - vtx_S[vtxBufferStartIdx].pos;
 			vec4 norm = crossVec4(v01, v02);
 
 			if (norm.z() >= 0.f)
 			{
-				//continue;
 				VertexShader _t = vtx_S[vtxBufferStartIdx + 1];
 				vtx_S[vtxBufferStartIdx + 1] = vtx_S[vtxBufferStartIdx + 2];
 				vtx_S[vtxBufferStartIdx + 2] = _t;
@@ -145,10 +135,8 @@ public:
 			this->isTopLeft_S[vtxBufferStartIdx + 2] = isTopLeft(p2, p0);			
 			
 			drawCount++;
-			//printf("");
 			if (drawCount == MAX_TRIANGLE_BUFFER || triCount == triNum - 1)
 			{
-				//printf("%s %d\n", __FILE__, __LINE__);
 				fragmentProcess<<<gridSize, blockSize >>> (fragmentShader, canvas, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
 				cudaDeviceSynchronize();
 				drawCount = 0;
@@ -157,7 +145,6 @@ public:
 		}
 		if (drawCount > 0)
 		{
-			//printf("%s %d\n", __FILE__, __LINE__);
 			fragmentProcess << <gridSize, blockSize >> > (fragmentShader, canvas, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
 			cudaDeviceSynchronize();
 			drawCount = 0;

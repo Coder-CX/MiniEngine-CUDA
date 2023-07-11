@@ -3,6 +3,7 @@
 #include "Basic.h"
 #include "Operators.cuh"
 #include "TexDefs.h"
+#include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
 void fillPixel1f(float* data, float color, int H, int W);
@@ -58,8 +59,6 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			c /= s;
 
 			float rhw = vtx[0].rhw * a + vtx[1].rhw * b + vtx[2].rhw * c;
-			//printf("%s %d\n", __FILE__, __LINE__);
-			//printf("(%d %d): %f %f\n", iy, ix, rhw, depthFrame.data[iy * canvas.W + ix]);
 			if (depth && rhw < depthFrame.data[iy * canvas->W + ix])
 				continue;
 			depthFrame.data[iy * canvas->W + ix] = rhw;
@@ -87,7 +86,6 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			}
 
 			float4 color = fragmentShader(fragmentInput);
-			//printf("(%d, %d) = %f %f %f %f\n", iy, ix, color.x, color.y, color.z, color.w);
 			canvas->data[iy * canvas->W + ix] = color;	
 		}
 	}
