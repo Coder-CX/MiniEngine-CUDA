@@ -13,9 +13,9 @@ inline int crossVec2(const T& v1, const T& v2)
 	return v1(0) * v2(1) - v1(1) * v2(0);
 }
 
-template <class FS>
+template <typename T, class FS>
 __global__
-void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box* box_S, bool* isTopLeft, int triNum,
+void fragmentProcess(Tex<T>* canvas, FS fragmentShader,  VertexShader* vtx_S, Box* box_S, bool* isTopLeft, int triNum,
 	bool depth, Tex1f depthFrame)
 {
 	int ix = threadIdx.x + blockDim.x * blockIdx.x;
@@ -53,10 +53,12 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 			b /= s;
 			c /= s;
 
+			int posIdx = iy * canvas->W + ix;
+
 			float rhw = vtx[0].rhw * a + vtx[1].rhw * b + vtx[2].rhw * c;
-			if (depth && rhw < depthFrame.data[iy * canvas->W + ix])
+			if (depth && rhw < depthFrame.data[posIdx])
 				continue;
-			depthFrame.data[iy * canvas->W + ix] = rhw;
+			depthFrame.data[posIdx] = rhw;
 
 
 			float w = 1.0f / ((rhw != 0.0f) ? rhw : 1.0f);
@@ -78,8 +80,8 @@ void fragmentProcess(FS fragmentShader, Tex4f* canvas, VertexShader* vtx_S, Box*
 				fragmentInput.vec4f[i] = input1.vec4f[i] * c0 + input2.vec4f[i] * c1 + input3.vec4f[i] * c2;
 			}
 
-			float4 color = fragmentShader(fragmentInput);
-			canvas->data[iy * canvas->W + ix] = color;
+			T color = fragmentShader(fragmentInput);
+			canvas->data[posIdx] = color;
 		}
 	}
 }

@@ -59,6 +59,11 @@ public:
 	{
 		this->depth = use;
 	}
+
+	void useBackCulling(bool use)
+	{
+		this->backCulling = use;
+	}
 	
 	void deleteFrame1f(int frameID)
 	{
@@ -69,8 +74,8 @@ public:
 		deleteFrame<float4>(frameID, frame4f, usedFrame4f);
 	}
 
-	template <class VS, class FS>
-	bool drawFrame(Tex4f* canvas, Vertex* vtxInput, unsigned int* indices, unsigned int triNum,
+	template <typename T, class VS, class FS>
+	bool drawFrame(Tex<T>* canvas, Vertex* vtxInput, unsigned int* indices, unsigned int triNum,
 		VS vertexShader, FS fragmentShader)
 	{
 		dim3 blockSize(BDIM_X, BDIM_Y);
@@ -125,16 +130,22 @@ public:
 			vec4 v02 = vtx_S[vtxBufferStartIdx + 2].pos - vtx_S[vtxBufferStartIdx].pos;
 			vec4 norm = crossVec4(v01, v02);
 
-			if (norm.z() >= 0.f)
-			{
-				VertexShader _t = vtx_S[vtxBufferStartIdx + 1];
-				vtx_S[vtxBufferStartIdx + 1] = vtx_S[vtxBufferStartIdx + 2];
-				vtx_S[vtxBufferStartIdx + 2] = _t;
-			}
-			else if (norm.z() == 0.f)
-			{
+			if (this->backCulling && norm.z() >= 0.f)
 				continue;
+			else
+			{
+				if (norm.z() > 0.f)
+				{
+					VertexShader _t = vtx_S[vtxBufferStartIdx + 1];
+					vtx_S[vtxBufferStartIdx + 1] = vtx_S[vtxBufferStartIdx + 2];
+					vtx_S[vtxBufferStartIdx + 2] = _t;
+				}
+				else if (norm.z() == 0.f)
+				{
+					continue;
+				}
 			}
+
 
 			VertexShader* vtx[3] = { &vtx_S[vtxBufferStartIdx], &vtx_S[vtxBufferStartIdx + 1], &vtx_S[vtxBufferStartIdx + 2] };
 				
@@ -153,7 +164,7 @@ public:
 			drawCount++;
 			if (drawCount == MAX_TRIANGLE_BUFFER || triCount == triNum - 1)
 			{
-				fragmentProcess<<<gridSize, blockSize >>> (fragmentShader, canvas, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
+				fragmentProcess <<<gridSize, blockSize >>> (canvas, fragmentShader, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
 				cudaDeviceSynchronize();
 				drawCount = 0;
 			}
@@ -161,7 +172,7 @@ public:
 		}
 		if (drawCount > 0)
 		{
-			fragmentProcess << <gridSize, blockSize >> > (fragmentShader, canvas, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
+			fragmentProcess << <gridSize, blockSize >> > (canvas, fragmentShader, this->vtx_S, this->box, this->isTopLeft_S, drawCount, depth, depthFrame);
 			cudaDeviceSynchronize();
 			drawCount = 0;
 		}
@@ -179,7 +190,6 @@ public:
 	
 	Tex4f* getFrame4f(int frameID);
 	Tex1f* getFrame1f(int frameID);
-
 	Tex_Shader* getTexID(int texID)
 	{
 		if (usedTexID[texID])
@@ -187,24 +197,41 @@ public:
 		else
 			printf("Tex [%d] is Used.\n", texID);
 	}
+	Tex1f getDepthFrame(void)
+	{
+		return this->depthFrame;
+	}
 
 	void bindTex1f(int texID, int frameID, cudaTextureDesc* texDesc)
 	{
 		bindTex<float>(texID, frameID, texDesc, this->frame1f, this->usedFrame1f, &this->channelDesc_1f);
 	}
-
 	void bindTex4f(int texID, int frameID, cudaTextureDesc* texDesc)
 	{
 		bindTex<float4>(texID, frameID, texDesc, this->frame4f, this->usedFrame4f, &this->channelDesc_4f);
 	}
 
 	void deleteTex(int texID);
+	void bindDepthBuffer(int frameID)
+	{
+		if (usedFrame1f[frameID])
+		{
+			this->depthFrame.H = this->frame1f[frameID]->H;
+			this->depthFrame.W = this->frame1f[frameID]->W;
+			this->depthFrame.data = this->frame1f[frameID]->data;
+		}
+		else
+		{
+			printf("Frame [%d] is Empty.\n", frameID);
+		}
+	}
+
 
 private:
 	void init(int Width, int Height);
 	void reset();
 
-	template<typename T>
+	template <typename T>
 	void addFrame(int frameID, Tex<T>** frame, bool* usedFrame, int height = -1, int width = -1)
 	{
 		if (!usedFrame[frameID])
@@ -214,7 +241,6 @@ private:
 			frame[frameID]->W = width == -1 ? this->Width : width;
 			cudaMalloc(&(frame[frameID]->data), sizeof(T) * frame[frameID]->H * frame[frameID]->W);
 			usedFrame[frameID] = true;
-			this->counter1f++;
 		}
 		else
 		{
@@ -222,7 +248,7 @@ private:
 		}
 	}
 	
-	template<typename T>
+	template <typename T>
 	void deleteFrame(int frameID, Tex<T>** frame, bool* usedFrame)
 	{
 		if (usedFrame[frameID])
@@ -291,6 +317,7 @@ private:
 	unsigned int counter4f = 0;
 
 	bool depth = true;
+	bool backCulling = true;
 	Tex1f depthFrame;
 	bool usedFrame1f[MAX_FRAMEBUFFER_NUM];
 	bool usedFrame4f[MAX_FRAMEBUFFER_NUM];

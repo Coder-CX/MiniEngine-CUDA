@@ -16,9 +16,28 @@ inline float2 vec2ToFloat2(vec2& v)
 }
 
 __host__ __device__
+inline float2 vec2ToFloat2(vec2&& v)
+{
+	return { v(0), v(1) };
+}
+
+
+__host__ __device__
 inline float3 vec3ToFloat3(vec3& v)
 {
 	return { v(0), v(1), v(2)};
+}
+
+__host__ __device__
+inline float4 vec4ToFloat4(vec4& v)
+{
+	return { v(0), v(1), v(2), v(3)};
+}
+
+__host__ __device__
+inline float4 vec4ToFloat4(vec4&& v)
+{
+	return { v(0), v(1), v(2), v(3) };
 }
 
 __host__ __device__
@@ -29,6 +48,18 @@ inline vec2 float2ToVec2(float2& v)
 
 __host__ __device__
 inline vec3 float3ToVec3(float3 & v)
+{
+	return vec3(v.x, v.y, v.z);
+}
+
+__host__ __device__
+inline vec3 float4ToVec3(float4& v)
+{
+	return vec3(v.x, v.y, v.z);
+}
+
+__host__ __device__
+inline vec3 float4ToVec3(float4&& v)
 {
 	return vec3(v.x, v.y, v.z);
 }
